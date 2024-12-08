@@ -31,20 +31,7 @@ for(node in frequencies) {
             antinodes[`${pt2}`].push(node)
             const rowdiff = pt1[0] - pt2[0];
             const coldiff = pt1[1] - pt2[1];
-            // const newpt1 = [pt1[0] + rowdiff, pt1[1] + coldiff];
-            // const newpt2 = [pt2[0] + (rowdiff * -1), pt2[1] + (coldiff * -1)];
-            // if(newpt1[0] >= 0 && newpt1[0] < map.length && newpt1[1] >= 0 && newpt1[1] < map[0].length) {
-            //     //its valid
-            //     if(!antinodes[`${newpt1}`]) antinodes[`${newpt1}`] = [];
-            //     antinodes[`${newpt1}`].push(node);
-            // }
-            // if(newpt2[0] >= 0 && newpt2[0] < map.length && newpt2[1] >= 0 && newpt2[1] < map[0].length) {
-            //     //its valid
-            //     if(!antinodes[`${newpt2}`]) antinodes[`${newpt2}`] = [];
-            //     antinodes[`${newpt2}`].push(node);
-            // }
 
-            //for part 2 we have to keep generating points until we exceed the bounds in a straight line
             let n = 1;
             while(true) {
                 const newpt1 = [pt1[0] + (rowdiff * n), pt1[1] + (coldiff * n)];
@@ -68,5 +55,5 @@ for(node in frequencies) {
         }
     }
 }
-//1241 is too low
+
 console.log(Object.keys(antinodes).length);
