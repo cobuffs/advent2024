@@ -10,7 +10,8 @@ let filestogetherhd = [];
 
 
 //part1(diskmap);
-part2brute(sample);
+//part2brute(sample);
+part2new(sample);
 
 function part1(diskmap) {
 
@@ -61,6 +62,28 @@ function part1(diskmap) {
     console.log(customSum(optimizedhd));
 }
 
+function part2new(diskmap) {
+    let id = 0;
+    let fulldisk = [];
+    for (let i = 0; i < diskmap.length; i++) {
+        if (i % 2 === 0) {
+            //its a file
+            files[id] = { "size": diskmap[i], "spaceremaining": diskmap[i], "processed": false };
+            for(let i = 0; i < diskmap[i]; i++) {
+                fulldisk.push(id);
+            }
+            id++;
+        } else {
+            //its free space
+            freespace.push(diskmap[i]);
+            for(let i = 0; i < diskmap[i]; i++) {
+                fulldisk.push('.');
+            }
+        }
+    }
+    console.log(defragHardDrive(fulldisk));
+}
+
 function part2brute(diskmap) {
     let id = 0;
     let fulldisk = [];
@@ -78,14 +101,13 @@ function part2brute(diskmap) {
             //its free space
             freespace.push(diskmap[i]);
             for(let i = 0; i < diskmap[i]; i++) {
-                fulldisk.push(0);
+                fulldisk.push('.');
             }
         }
     }
     let locptr = 0;
     let lastfileptr = fulldisk.length - 1;
 
-    console.log(totallen);
     //start by taking
     //we need to go ahead and process the 0 to not make it awkward later
     let file = files[0];
@@ -199,6 +221,63 @@ function part2(diskmap) {
     }
     console.log(filestogetherhd.length);
 }
+
+function defragHardDrive(hardDrive) {
+    // Helper function to find the first block of free space that fits a given file
+    function findFirstFreeSpace(freeSpaceMap, fileSize) {
+        for (let start = 0; start < freeSpaceMap.length; start++) {
+            const [freeStart, freeSize] = freeSpaceMap[start];
+            if (fileSize <= freeSize) return start;
+        }
+        return -1; // No suitable space found
+    }
+
+    // Find all file chunks and free space chunks
+    const freeSpaceMap = [];
+    const fileChunks = [];
+    let index = 0;
+
+    while (index < hardDrive.length) {
+        if (hardDrive[index] === '.') {
+            // Detect free space
+            let start = index;
+            while (index < hardDrive.length && hardDrive[index] === '.') {
+                index++;
+            }
+            freeSpaceMap.push([start, index - start]);
+        } else {
+            // Detect file chunk
+            let fileId = hardDrive[index];
+            let start = index;
+            while (index < hardDrive.length && hardDrive[index] === fileId) {
+                index++;
+            }
+            fileChunks.push({ id: fileId, start, size: index - start });
+        }
+    }
+
+    // Move files to the first available free space that fits
+    for (let i = fileChunks.length - 1; i >= 0; i--) {
+        const file = fileChunks[i];
+        const targetIndex = findFirstFreeSpace(freeSpaceMap, file.size);
+
+        if (targetIndex !== -1) {
+            const [freeStart, freeSize] = freeSpaceMap[targetIndex];
+
+            // Move the file to the new location
+            for (let j = 0; j < file.size; j++) {
+                hardDrive[freeStart + j] = file.id;
+                hardDrive[file.start + j] = '.'; // Mark the original location as free
+            }
+
+            // Update free space map
+            freeSpaceMap[targetIndex] = [freeStart + file.size, freeSize - file.size];
+        }
+    }
+
+    return hardDrive;
+}
+
 
 function customSum(arr) {
     return arr.reduce((sum, num, index) => sum + (num * index), 0);
