@@ -1,58 +1,76 @@
 function defragHardDrive(hardDrive) {
-    // Helper function to find the first block of free space that fits a given file
-    function findFirstFreeSpace(freeSpaceMap, fileSize) {
-        for (let start = 0; start < freeSpaceMap.length; start++) {
-            const [freeStart, freeSize] = freeSpaceMap[start];
-            if (fileSize <= freeSize) return start;
-        }
-        return -1; // No suitable space found
-    }
-
-    // Find all file chunks and free space chunks
-    const freeSpaceMap = [];
+    // Parse the hard drive into free space chunks and file chunks
+    const freeSpaces = [];
     const fileChunks = [];
     let index = 0;
 
+    // Parse the hard drive array
     while (index < hardDrive.length) {
         if (hardDrive[index] === '.') {
-            // Detect free space
             let start = index;
             while (index < hardDrive.length && hardDrive[index] === '.') {
                 index++;
             }
-            freeSpaceMap.push([start, index - start]);
+            freeSpaces.push({ start, size: index - start });
         } else {
-            // Detect file chunk
-            let fileId = hardDrive[index];
+            let fileId = parseInt(hardDrive[index], 10);
             let start = index;
-            while (index < hardDrive.length && hardDrive[index] === fileId) {
+            while (index < hardDrive.length && parseInt(hardDrive[index], 10) === fileId) {
                 index++;
             }
             fileChunks.push({ id: fileId, start, size: index - start });
         }
     }
 
-    // Move files to the first available free space that fits
-    for (let i = fileChunks.length - 1; i >= 0; i--) {
-        const file = fileChunks[i];
-        const targetIndex = findFirstFreeSpace(freeSpaceMap, file.size);
+    console.log("Initial Free Spaces:", JSON.stringify(freeSpaces, null, 2));
+    console.log("Initial File Chunks:", JSON.stringify(fileChunks, null, 2));
 
-        if (targetIndex !== -1) {
-            const [freeStart, freeSize] = freeSpaceMap[targetIndex];
+    // Move files from the end to the first available free space
+    for (let j = fileChunks.length - 1; j >= 0; j--) {
+        const file = fileChunks[j];
+        const fileSize = file.size;
 
-            // Move the file to the new location
-            for (let j = 0; j < file.size; j++) {
-                hardDrive[freeStart + j] = file.id;
-                hardDrive[file.start + j] = '.'; // Mark the original location as free
+        for (let k = 0; k < freeSpaces.length; k++) {
+            const space = freeSpaces[k];
+
+            if (space.size >= fileSize) {
+                console.log(`Moving file ${file.id} from ${file.start} to ${space.start}`);
+
+                // Move the file to the free space
+                for (let m = 0; m < fileSize; m++) {
+                    hardDrive[space.start + m] = file.id.toString();
+                    hardDrive[file.start + m] = '.'; // Free the original space
+                }
+
+                // Update the free space map
+                space.start += fileSize;
+                space.size -= fileSize;
+
+                // If space is fully used, remove it
+                if (space.size === 0) {
+                    freeSpaces.splice(k, 1);
+                }
+
+                console.log("Updated Free Spaces:", JSON.stringify(freeSpaces, null, 2));
+                console.log("Updated Hard Drive:", hardDrive.join(''));
+                break; // File has been moved, exit loop for this file
             }
-
-            // Update free space map
-            freeSpaceMap[targetIndex] = [freeStart + file.size, freeSize - file.size];
         }
     }
 
-    return hardDrive;
+    return hardDrive.join(',');
 }
+
+// Example test input
+const input = [
+    '0', '0', '.', '.', '.', '1', '1', '1', '.', '.', '.', '2', '.', '.', '3', '3', '3', '.', '4', '4', '.', 
+    '5', '5', '5', '5', '.', '6', '6', '6', '6', '.', '7', '7', '7', '.', '8', '8', '8', '8', '9', '9', '.','10', '10'
+];
+
+// Run the function
+const result = defragHardDrive(input);
+
+console.log("Final Optimized Hard Drive:", result);
 
 function customSum(arr) {
     return arr.reduce((sum, num, index) => {
@@ -86,6 +104,3 @@ for (let i = 0; i < diskmap.length; i++) {
         }
     }
 }
-
-const result = defragHardDrive(fulldisk);
-console.log(customSum(result)); // Outputs: 00992111777.44.333....5555.6666.....8888..
